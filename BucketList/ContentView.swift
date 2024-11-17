@@ -4,20 +4,73 @@
 //
 //  Created by Bibek Bhujel on 12/11/2024.
 //
-
+import MapKit
 import SwiftUI
 
 struct ContentView: View {
+    let startPosition = MapCameraPosition.region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 56, longitude: -3),
+            span: MKCoordinateSpan(latitudeDelta: 10, longitudeDelta: 10)
+        )
+    )
+
+    @State private var selectedLocation: MapLocation?
+
+    @State private var locations = [MapLocation]()
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        MapReader { proxy in
+            Map(initialPosition: startPosition) {
+                ForEach(locations) { location in
+                    Annotation(
+                        location.name,
+                        coordinate: location.coordinate
+                    ) {
+                        VStack {
+                            Image(systemName: "star.circle")
+                                .resizable()
+                                .background(.white)
+                                .frame(width: 44, height: 44)
+                                .foregroundStyle(.red)
+                                .clipShape(.circle)
+                                .simultaneousGesture(LongPressGesture(minimumDuration: 1).onEnded { _ in
+                                    selectedLocation = location
+                                })
+                        }
+                    }
+                }
+            }
+            .onTapGesture { position in
+                if let coordinate = proxy.convert(position, from: .local) {
+                    let newLocation = MapLocation(
+                        id: UUID(),
+                        name: "New Location",
+                        description: "",
+                        latitude: coordinate.latitude,
+                        longitude: coordinate.longitude
+                    )
+
+                    locations.append(newLocation)
+                }
+            }
+            .sheet(item: $selectedLocation) {selectedLocation in
+                // It is another form of sheet. The sheet will appear when there is some value in the selectedlocation.
+                EditView(location: selectedLocation) { newLocation in
+                    // update the current one
+                    if let index = locations.firstIndex(of: selectedLocation) {
+                        locations[index] = newLocation
+                        // this will not update the location because it will first treat both selectedLocation and newLocation as same because we have overriden method == and made sure that if the UUID is same then the two map locations are same
+                        // Therefore, to fix this we must make sure that the UUID is different for both of them
+                        // make the UUID mutable
+                        // and create a new UUID when you create a new location in the edit view
+                        
+                    }
+                }
+            }
         }
-        .padding()
     }
 }
+
 
 #Preview {
     ContentView()

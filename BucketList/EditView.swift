@@ -8,11 +8,43 @@
 import SwiftUI
 
 struct EditView: View {
+    @Environment(\.dismiss) var dismiss
+    @State private var name: String
+    @State private var description: String
+    let location: MapLocation
+    let onSave: (MapLocation) -> Void
+
+    init(location: MapLocation,onSave: @escaping (MapLocation) -> Void) {
+        // rather than changing the data , we are changing the while instance of @State properties
+        self.location = location
+        self.onSave = onSave
+        _name = State(initialValue: location.name)
+        _description = State(initialValue: location.description)
+    }
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Place Name", text: $name)
+                    TextField("Description", text: $description)
+                }
+            }.toolbar {
+                Button("Edit Location", systemImage: "plus") {
+                    // create a new location
+                    // copy of the location being passed
+                    var newLocation = location
+                    newLocation.id = UUID()
+                    newLocation.name = name
+                    newLocation.description = description
+                    onSave(newLocation)
+                    dismiss()
+                }
+            }
+        }
     }
 }
 
 #Preview {
-    EditView()
+    EditView(location: .example) { _ in }
 }
