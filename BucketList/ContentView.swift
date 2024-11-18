@@ -15,13 +15,11 @@ struct ContentView: View {
         )
     )
 
-    @State private var selectedLocation: MapLocation?
-
-    @State private var locations = [MapLocation]()
+    @State private var viewModel = ViewModel()
     var body: some View {
         MapReader { proxy in
             Map(initialPosition: startPosition) {
-                ForEach(locations) { location in
+                ForEach(viewModel.locations) { location in
                     Annotation(
                         location.name,
                         coordinate: location.coordinate
@@ -34,37 +32,29 @@ struct ContentView: View {
                                 .foregroundStyle(.red)
                                 .clipShape(.circle)
                                 .simultaneousGesture(LongPressGesture(minimumDuration: 1).onEnded { _ in
-                                    selectedLocation = location
+                                    viewModel.selectedLocation = location
                                 })
                         }
                     }
                 }
-            }
+            }.mapStyle(.hybrid)
             .onTapGesture { position in
                 if let coordinate = proxy.convert(position, from: .local) {
-                    let newLocation = MapLocation(
-                        id: UUID(),
-                        name: "New Location",
-                        description: "",
-                        latitude: coordinate.latitude,
-                        longitude: coordinate.longitude
-                    )
-
-                    locations.append(newLocation)
+                    viewModel.addLocation(coordinate: coordinate)
                 }
             }
-            .sheet(item: $selectedLocation) {selectedLocation in
+            .sheet(item: $viewModel.selectedLocation) {selectedLocation in
                 // It is another form of sheet. The sheet will appear when there is some value in the selectedlocation.
                 EditView(location: selectedLocation) { newLocation in
                     // update the current one
-                    if let index = locations.firstIndex(of: selectedLocation) {
-                        locations[index] = newLocation
-                        // this will not update the location because it will first treat both selectedLocation and newLocation as same because we have overriden method == and made sure that if the UUID is same then the two map locations are same
-                        // Therefore, to fix this we must make sure that the UUID is different for both of them
-                        // make the UUID mutable
-                        // and create a new UUID when you create a new location in the edit view
-                        
-                    }
+//                    if let index = viewModel.locations.firstIndex(of: selectedLocation) {
+//                        viewModel.locations[index] = newLocation
+//                        // this will not update the location because it will first treat both selectedLocation and newLocation as same because we have overriden method == and made sure that if the UUID is same then the two map locations are same
+//                        // Therefore, to fix this we must make sure that the UUID is different for both of them
+//                        // make the UUID mutable
+//                        // and create a new UUID when you create a new location in the edit view
+//                    }
+                    viewModel.updateLocation(newLocation: newLocation)
                 }
             }
         }

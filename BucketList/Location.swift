@@ -28,6 +28,7 @@ struct MapLocation: Identifiable, Codable, Equatable{
     static func ==(lhs: MapLocation, rhs: MapLocation) -> Bool {
         lhs.id == rhs.id
     }
+
 // this is for testing purpose and won't be included in app store release
 #if DEBUG
     static let example = MapLocation(id: UUID(), name: "Buckingham Palace", description: "Lit by over 40,000 lightbulbs.", latitude: 51.501, longitude: -0.141)
