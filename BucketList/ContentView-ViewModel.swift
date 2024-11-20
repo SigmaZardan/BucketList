@@ -34,6 +34,10 @@ extension ContentView {
             }
         }
 
+        var showError: Bool = false
+        var errorTitle: String = ""
+        var errorMessage: String = ""
+
         init() {
             do {
                 let data = try Data(contentsOf: savePath)
@@ -93,41 +97,37 @@ extension ContentView {
                 ) {
                 let reason = "Please authenticate yourself to unlock your places."
 
-                context
+                  context
                     .evaluatePolicy(
                         .deviceOwnerAuthenticationWithBiometrics,
                         localizedReason: reason
                     ) {
-                        success,
-                        authenticationError in
+                        success, authenticationError in
                             if success {
                                 self.isUnlocked = true
-                                print("Authentication successful")
-                            } else  {
-                                // error
-                                if let error = authenticationError {
-                                    print(
-                                        "Authentication Error: \(error.localizedDescription)"
-                                    )
-                                } else {
-                                    print("Unknown authentication error")
+                            } else {
+                                // authentication error occurred
+                                if let error = authenticationError as? LAError {
+                                    if error.errorCode == -6 {
+                                        self.errorTitle = "Permission denied."
+                                        self.errorMessage = "Allow permission for biometrics on app settings."
+                                        self.showError = true
+                                    }
                                 }
                             }
-                    }
+                 }
 
             } else {
                 // no biometrics
                 // we need to handle it somehow
-                if let error {
-                    print(
-                        "Biometrics  unavailable: \(error.localizedDescription)"
-                    )
-                } else {
-                    print("No biometric authentication available")
+                if let error = error as? LAError {
+                    if error.errorCode == -6 {
+                        self.errorTitle = "Permission denied."
+                        self.errorMessage = "Allow permission for biometrics on app settings."
+                        self.showError = true
+                    }
                 }
             }
         }
-
-
     }
 }
